@@ -1,79 +1,92 @@
-// sketch.js - purpose and description here
-// Author: Your Name
-// Date:
+// sketch.js - my snow falling p5.js sketch
+// Author: Joseph Gonzalez
+// Date: 1/27/2025
+// done witht eh help of chat.gpt
 
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
+let maxCount = 5000; 
+let currentCount = 1;
+let circles = []; 
 
-// Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
-const VALUE1 = 1;
-const VALUE2 = 2;
-
-// Globals
-let myInstance;
-let canvasContainer;
-var centerHorz, centerVert;
-
-class MyClass {
-    constructor(param1, param2) {
-        this.property1 = param1;
-        this.property2 = param2;
-    }
-
-    myMethod() {
-        // code to run when method is called
-    }
-}
-
-function resizeScreen() {
-  centerHorz = canvasContainer.width() / 2; // Adjusted for drawing logic
-  centerVert = canvasContainer.height() / 2; // Adjusted for drawing logic
-  console.log("Resizing...");
-  resizeCanvas(canvasContainer.width(), canvasContainer.height());
-  // redrawCanvas(); // Redraw everything based on new size
-}
-
-// setup() function is called once when the program starts
 function setup() {
-  // place our canvas, making it fit our container
-  canvasContainer = $("#canvas-container");
-  let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
-  canvas.parent("canvas-container");
-  // resize canvas is the page is resized
-
-  // create an instance of the class
-  myInstance = new MyClass("VALUE1", "VALUE2");
-
-  $(window).resize(function() {
-    resizeScreen();
-  });
-  resizeScreen();
-}
-
-// draw() function is called repeatedly, it's the main animation loop
-function draw() {
-  background(220);    
-  // call a method on the instance
-  myInstance.myMethod();
-
-  // Set up rotation for the rectangle
-  push(); // Save the current drawing context
-  translate(centerHorz, centerVert); // Move the origin to the rectangle's center
-  rotate(frameCount / 100.0); // Rotate by frameCount to animate the rotation
-  fill(234, 31, 81);
+  createCanvas(800, 800);
+  fill(240);
   noStroke();
-  rect(-125, -125, 250, 250); // Draw the rectangle centered on the new origin
-  pop(); // Restore the original drawing context
 
-  // The text is not affected by the translate and rotate
-  fill(255);
-  textStyle(BOLD);
-  textSize(140);
-  text("p5*", centerHorz - 105, centerVert + 40);
+
+  circles.push(new AggregationCircle(width / 2, height / 2, 10));
 }
 
-// mousePressed() function is called once after every time a mouse button is pressed
-function mousePressed() {
-    // code to run when mouse is pressed
+function draw() {
+  background('rgb(35,191,206)');
+
+  if (currentCount < maxCount) {
+    let newR = random(1, 7);
+    let newX = random(newR, width - newR);
+    let newY = random(newR, height - newR);
+
+    let closestDist = Number.MAX_VALUE;
+    let closestIndex = 0;
+
+    for (let i = 0; i < circles.length; i++) {
+      let newDist = dist(newX, newY, circles[i].x, circles[i].y);
+      if (newDist < closestDist) {
+        closestDist = newDist;
+        closestIndex = i;
+      }
+    }
+
+    let angle = atan2(newY - circles[closestIndex].y, newX - circles[closestIndex].x);
+
+    let newCircle = new AggregationCircle(
+      circles[closestIndex].x + cos(angle) * (circles[closestIndex].r + newR),
+      circles[closestIndex].y + sin(angle) * (circles[closestIndex].r + newR),
+      newR
+    );
+    circles.push(newCircle);
+    currentCount++;
+  }
+
+  for (let circle of circles) {
+    circle.update();
+    circle.display();
+  }
+}
+
+function AggregationCircle(x, y, r) {
+  this.x = x;
+  this.y = y;
+  this.r = r;
+  this.creationTime = millis(); 
+  this.isFalling = false;
+  this.fallSpeed = random(1, 3);
+  this.initialAngle = random(0, TWO_PI); 
+  this.angleVelocity = random(0.02, 0.05); 
+
+  this.update = function() {
+    if (!this.isFalling && millis() - this.creationTime > 5000) {
+      this.isFalling = true;
+    }
+
+    if (this.isFalling) {
+      this.y += this.fallSpeed;
+
+      this.x += sin(this.initialAngle) * 2; 
+      this.initialAngle += this.angleVelocity;
+
+      if (this.y > height) {
+        this.y = random(-50, 0);
+        this.isFalling = false;
+        this.creationTime = millis(); 
+      }
+    }
+  };
+
+  this.display = function() {
+    fill(255);
+    ellipse(this.x, this.y, this.r * 2);
+  };
+}
+
+function keyReleased() {
+  if (key == 's' || key == 'S') saveCanvas('falling_swaying_aggregation', 'png');
 }
