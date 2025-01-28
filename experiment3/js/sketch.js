@@ -1,7 +1,7 @@
 // sketch.js - my snow falling p5.js sketch
 // Author: Joseph Gonzalez
 // Date: 1/27/2025
-// done witht eh help of chat.gpt
+// done with the help of chat.gpt
 
 let maxCount = 5000; 
 let currentCount = 1;
